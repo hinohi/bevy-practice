@@ -23,6 +23,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(HelloPlugin)
+        .add_systems(Update, bevy::window::close_on_esc)
         .run();
 }
 
