@@ -6,11 +6,20 @@ struct Person;
 #[derive(Component)]
 struct Name(String);
 
+struct HelloPlugin;
+
+impl Plugin for HelloPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Startup, add_people)
+            .add_systems(Update, hello_world)
+            .add_systems(Update, greet_people);
+    }
+}
+
 fn main() {
     App::new()
-        .add_systems(Startup, add_people)
-        .add_systems(Update, hello_world)
-        .add_systems(Update, greet_people)
+        .add_plugins(DefaultPlugins)
+        .add_plugins(HelloPlugin)
         .run();
 }
 
