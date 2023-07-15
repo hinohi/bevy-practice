@@ -160,9 +160,9 @@ impl Pixels {
     }
 }
 
-const WIDTH: u32 = 600;
-const HEIGHT: u32 = 400;
-const SCALE_FACTOR: f32 = 2.0;
+const WIDTH: u32 = 1200;
+const HEIGHT: u32 = 800;
+const SCALE_FACTOR: u32 = 1;
 
 fn main() {
     let mut rng = StdRng::from_entropy();
@@ -170,15 +170,12 @@ fn main() {
     App::new()
         .insert_resource(Random(rng))
         .insert_resource(world)
-        .insert_resource(Pixels::new(WIDTH, HEIGHT))
+        .insert_resource(Pixels::new(WIDTH / SCALE_FACTOR, HEIGHT / SCALE_FACTOR))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Ray".to_string(),
                 resizable: false,
-                resolution: WindowResolution::new(
-                    WIDTH as f32 * SCALE_FACTOR,
-                    HEIGHT as f32 * SCALE_FACTOR,
-                ),
+                resolution: WindowResolution::new(WIDTH as f32, HEIGHT as f32),
                 ..Default::default()
             }),
             ..Default::default()
@@ -187,9 +184,9 @@ fn main() {
         .add_plugins(LogDiagnosticsPlugin::default())
         .add_plugins(PixelsPlugin {
             primary_window: Some(PixelsOptions {
-                width: WIDTH,
-                height: HEIGHT,
-                scale_factor: SCALE_FACTOR,
+                width: WIDTH / SCALE_FACTOR,
+                height: HEIGHT / SCALE_FACTOR,
+                scale_factor: SCALE_FACTOR as f32,
                 ..default()
             }),
         })
