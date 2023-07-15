@@ -135,18 +135,12 @@ struct Pixels {
 }
 
 impl Pixels {
-    fn new() -> Pixels {
+    fn new(width: u32, height: u32) -> Pixels {
         Pixels {
-            width: 0,
-            height: 0,
-            pixels: Vec::new(),
+            width,
+            height,
+            pixels: vec![(ray_tracing::BLACK, 0); (width * height) as usize],
         }
-    }
-
-    fn resize(&mut self, width: u32, height: u32) {
-        self.width = width;
-        self.height = height;
-        self.pixels = vec![(ray_tracing::BLACK, 0); (width * height) as usize];
     }
 
     fn add_color(&mut self, x: u32, y: u32, color: Color) {
@@ -166,44 +160,51 @@ impl Pixels {
     }
 }
 
+const WIDTH: u32 = 600;
+const HEIGHT: u32 = 400;
+const SCALE_FACTOR: f32 = 2.0;
+
 fn main() {
     let mut rng = StdRng::from_entropy();
-    let window = WindowResolution::new(1200.0, 800.0);
-    let world = World::from_rng(&mut rng, window.width() as f64 / window.height() as f64);
-    let pixels = Pixels::new();
+    let world = World::from_rng(&mut rng, WIDTH as f64 / HEIGHT as f64);
     App::new()
         .insert_resource(Random(rng))
         .insert_resource(world)
-        .insert_resource(pixels)
+        .insert_resource(Pixels::new(WIDTH, HEIGHT))
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "Ray".to_string(),
                 resizable: false,
-                resolution: window,
+                resolution: WindowResolution::new(
+                    WIDTH as f32 * SCALE_FACTOR,
+                    HEIGHT as f32 * SCALE_FACTOR,
+                ),
                 ..Default::default()
             }),
             ..Default::default()
         }))
         .add_plugins(FrameTimeDiagnosticsPlugin)
         .add_plugins(LogDiagnosticsPlugin::default())
-        .add_plugins(PixelsPlugin::default())
+        .add_plugins(PixelsPlugin {
+            primary_window: Some(PixelsOptions {
+                width: WIDTH,
+                height: HEIGHT,
+                scale_factor: SCALE_FACTOR,
+                ..default()
+            }),
+        })
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(PostUpdate, draw.in_set(PixelsSet::Draw))
         .run();
 }
 
 fn draw(
-    mut buffer: Query<(&mut PixelsWrapper, &PixelsOptions)>,
+    mut buffer: Query<&mut PixelsWrapper>,
     mut rng: ResMut<Random>,
     world: Res<World>,
     mut pixels: ResMut<Pixels>,
 ) {
-    let Ok((mut wrapper, option)) = buffer.get_single_mut() else { return };
-    let width = option.width;
-    let height = option.height;
-    if width != pixels.width || height != pixels.height {
-        pixels.resize(width, height);
-    }
+    let Ok(mut wrapper) = buffer.get_single_mut() else { return };
     assert_eq!(wrapper.pixels.frame().len(), pixels.pixels.len() * 4);
     for _ in 0..10000 {
         let (x, y, ray) = world.get_ray(&mut rng.0, pixels.width, pixels.height);
